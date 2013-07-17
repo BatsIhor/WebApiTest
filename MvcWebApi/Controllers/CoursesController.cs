@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web.Http;
 
 namespace MvcWebApi.Controllers
@@ -32,17 +35,28 @@ namespace MvcWebApi.Controllers
             return courses;
         }
 
-        public course Get(int id)
+        public HttpResponseMessage Get(int id)
         {
-            return courses.FirstOrDefault(x => x.id == id);
-            //if null than return 404
+            course firstOrDefault = courses.FirstOrDefault(x => x.id == id);
+            
+            if (firstOrDefault == null)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "incorrect item id");
+            }
+
+            HttpResponseMessage httpResponseMessage = Request.CreateResponse<course>(HttpStatusCode.Found, firstOrDefault);
+            return httpResponseMessage;
         }
 
-        public void Post([FromBody]course _course)
+        public HttpResponseMessage Post([FromBody]course _course)
         {
             _course.id = courses.Count;
             courses.Add(_course);
-            //return 201
+
+            HttpResponseMessage httpResponseMessage = Request.CreateResponse(HttpStatusCode.Created);
+            httpResponseMessage.Headers.Location = new Uri(Request.RequestUri + _course.id.ToString());
+
+            return httpResponseMessage;
         }
         
         public void Put(int id, [FromBody]course _course)
